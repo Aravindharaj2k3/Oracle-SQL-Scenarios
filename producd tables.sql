@@ -64,16 +64,94 @@ INSERT ALL
     INTO Product_Scrap00 (scrap_gen, site_id, product_id, reason_id, scrap_length, scrap_weight) VALUES (131, 3, 9, 81, 500, 600)
 SELECT * FROM dual;
 
+
+select * from reason00;
+select * from product00;
+select * from ProjectSite00;
+select * from Product_Scrap00;
+
 --Write a query to give me the reason description and total length of scrap.
---What are the common reasons of scrap generation between Cat6 and Cat5e Core?
---Find the products which are being associated with Linmar Factory.
+select r.reason_description,ps.scrap_length as total_length_of_scrap
+from reason00 r 
+inner join Product_Scrap00 ps on r.reason_id = ps.reason_id
+where scrap_length = (select max(ps.scrap_length) from Product_Scrap00 ps);
+
+--Find the products which are being associated with Linmar Factory.4
+
+select distinct (p.product_name),ps.projectsite_name
+from product00 p 
+inner join Product_Scrap00 pso on p.product_id = pso.product_id
+inner join ProjectSite00 ps on pso.site_id = ps.site_id
+where ps.projectsite_name ='Linmar Factory';
+
+
 --Write a query to get the product which gives the most scrap length in each project site.
+select product_name,max(scrap_length)
+from product00 p
+inner join Product_Scrap00 pso on p.product_id = pso.product_id
+group by product_name;
+
 --Find the highest reason of rejection (in terms of transaction count).
+select r.reason_description,count(pso.reason_id)
+from reason00 r 
+inner join Product_Scrap00 pso on r.reason_id = pso.reason_id 
+group by r.reason_description
+order by count(pso.reason_id) desc
+fetch first 2 rows only ;
+
+
 --What is the total length of scrap for Cat6 and Telephone put together?
---Find the product name where we don’t have any scrap.
+
+select p.product_name,sum(pso.scrap_length)
+from product00 p
+inner join Product_Scrap00 pso
+on p.product_id = pso.product_id
+where p.product_name like 'Cat6' or  p.product_name like 'Telephone'
+group by p.product_name ;
+
+
+--Find the product name where we donâ€™t have any scrap.
+select p.product_name,pso.scrap_length
+from product00 p
+left join Product_Scrap00 pso
+on p.product_id = pso.product_id
+where pso.product_id is null ;
+
 --Display the site name, product name, reason of scrap, length and weight from Head Office.
+
+select ps.projectsite_name,p.product_name,r.reason_description,pso.scrap_length,pso.scrap_weight
+from projectsite00 ps 
+inner join product_scrap00 pso 
+on ps.site_id = pso.site_id
+inner join product00 p
+on pso.product_id = p.product_id 
+inner join reason00 r 
+on pso.reason_id = r.reason_id
+where ps.projectsite_name ='Head Office';
+
+
 --Find the product name and site name for all the Power Failure reason associated with.
+
+
+select p.product_name,ps.projectsite_name,r.reason_description
+from product00 p
+inner join product_scrap00 pso
+on p.product_id = pso.product_id
+inner join projectsite00 ps
+on pso.site_id = ps.site_id
+inner join reason00 r
+on pso.reason_id = r.reason_id
+where r.reason_description ='Power Failure' ;
+
+
 --Display the product we have zero scrap length.
+
+select p.product_name,pso.scrap_length
+from product00 p
+inner join product_scrap00 pso
+on p.product_id = pso.product_id
+where pso.scrap_length like 0;
+
 
 commit;
 
